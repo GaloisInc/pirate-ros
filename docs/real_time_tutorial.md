@@ -25,6 +25,8 @@ These are the options that allows to configure the process real-time settings:
  `config-child-threads False` is set, only the main thread where the ROS executor is set with the 
  `priority` and `cpu-affinity` options. If, `config-child-threads True` is set, the DDS threads
   will also inherit the same priority and CPU affinity configuration than the main thread.
+* `driver-enable`: enable/disable pendulum driver. Default - enabled.
+* `controller-enable`: enable/disable pendulum controller. Default - enabled.
 
 Example using ros2 launch: 
 
@@ -36,6 +38,16 @@ Example using the executable command line arguments:
 
 ```bash
 ros2 run pendulum_demo pendulum_demo --priority 80 --cpu-affinity:=4 --lock-memory-size 100 --config-child-threads True 
+```
+
+Example running driver only:
+```bash
+ros2 run pendulum_demo pendulum_demo --driver-enable True --controller-enable False
+```
+
+Example running controller only:
+```bash
+ros2 run pendulum_demo pendulum_demo --driver-enable False --controller-enable True
 ```
 
 ### Set topic deadline QoS

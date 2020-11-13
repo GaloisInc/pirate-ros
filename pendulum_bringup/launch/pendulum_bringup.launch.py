@@ -67,6 +67,14 @@ def generate_launch_description():
         name='config-child-threads',
         default_value='False',
         description='Configure process child threads (typically DDS threads)')
+    driver_enable_param = DeclareLaunchArgument(
+        name='driver-enable',
+        default_value='True',
+        description='Enable/disable pendulum driver nodes')
+    controller_enable_param = DeclareLaunchArgument(
+        name='controller-enable',
+        default_value='True',
+        description='Enable/disable controller driver nodes')
     with_rviz_param = DeclareLaunchArgument(
         'rviz',
         default_value='False',
@@ -95,7 +103,9 @@ def generate_launch_description():
            '--cpu-affinity', LaunchConfiguration('cpu-affinity'),
            '--lock-memory', LaunchConfiguration('lock-memory'),
            '--lock-memory-size', LaunchConfiguration('lock-memory-size'),
-           '--config-child-threads', LaunchConfiguration('config-child-threads')
+           '--config-child-threads', LaunchConfiguration('config-child-threads'),
+           '--driver-enable', LaunchConfiguration('driver-enable'),
+           '--controller-enable', LaunchConfiguration('controller-enable'),
            ]
     )
 
@@ -150,6 +160,8 @@ def generate_launch_description():
         with_lock_memory_param,
         lock_memory_size_param,
         config_child_threads_param,
+        driver_enable_param,
+        controller_enable_param,
         with_rviz_param,
         robot_state_publisher_runner,
         pendulum_demo_runner,

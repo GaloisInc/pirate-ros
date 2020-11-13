@@ -15,6 +15,7 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -25,6 +26,7 @@
 
 int main(int argc, char * argv[])
 {
+  std::vector<std::shared_ptr<rclcpp_lifecycle::LifecycleNode>> nodes;
   pendulum::tools::ProcessSettings settings;
   if (!settings.init(argc, argv)) {
     return EXIT_FAILURE;
@@ -45,17 +47,29 @@ int main(int argc, char * argv[])
     rclcpp::executors::StaticSingleThreadedExecutor exec;
 
     // Create pendulum controller node
-    using pendulum::pendulum_controller::PendulumControllerNode;
-    const auto controller_node_ptr =
-      std::make_shared<PendulumControllerNode>("pendulum_controller");
+    if (settings.controller_enable) {
+      RCLCPP_INFO(rclcpp::get_logger("pendulum_demo"), "Pendulum controller enabled");
+      using pendulum::pendulum_controller::PendulumControllerNode;
+      const auto controller_node_ptr =
+          std::make_shared<PendulumControllerNode>("pendulum_controller");
 
-    exec.add_node(controller_node_ptr->get_node_base_interface());
+      exec.add_node(controller_node_ptr->get_node_base_interface());
+      nodes.push_back(std::move(controller_node_ptr));
+    } else {
+      RCLCPP_INFO(rclcpp::get_logger("pendulum_demo"), "Pendulum controller disabled");
+    }
 
     // Create pendulum simulation
-    using pendulum::pendulum_driver::PendulumDriverNode;
-    const auto driver_node_ptr = std::make_shared<PendulumDriverNode>("pendulum_driver");
+    if (settings.driver_enable) {
+      RCLCPP_INFO(rclcpp::get_logger("pendulum_demo"), "Pendulum driver enabled");
+      using pendulum::pendulum_driver::PendulumDriverNode;
+      const auto driver_node_ptr = std::make_shared<PendulumDriverNode>("pendulum_driver");
 
-    exec.add_node(driver_node_ptr->get_node_base_interface());
+      exec.add_node(driver_node_ptr->get_node_base_interface());
+      nodes.push_back(std::move(driver_node_ptr));
+    } else {
+      RCLCPP_INFO(rclcpp::get_logger("pendulum_demo"), "Pendulum driver disabled");
+    }
 
     // configure process real-time settings
     if (!settings.configure_child_threads) {
@@ -64,8 +78,9 @@ int main(int argc, char * argv[])
     }
 
     if (settings.auto_start_nodes) {
-      pendulum::tools::autostart(*controller_node_ptr);
-      pendulum::tools::autostart(*driver_node_ptr);
+      for (auto node = nodes.begin(); node < nodes.end(); node++) {
+        pendulum::tools::autostart(**node);
+      }
     }
 
     exec.spin();

@@ -39,13 +39,27 @@ struct ProcessSettings
       "\t[%s set process real-time priority]\n"
       "\t[%s set process cpu affinity]\n"
       "\t[%s configure process settings in child threads]\n"
+      "\t[%s enable/disable pendulum driver]\n"
+      "\t[%s enable/disable pendulum controller]\n"
       "\t[-h]\n",
       OPTION_AUTO_ACTIVATE_NODES.c_str(),
       OPTION_LOCK_MEMORY.c_str(),
       OPTION_LOCK_MEMORY_SIZE.c_str(),
       OPTION_PRIORITY.c_str(),
       OPTION_CPU_AFFINITY.c_str(),
-      OPTION_CONFIG_CHILD_THREADS.c_str());
+      OPTION_CONFIG_CHILD_THREADS.c_str(),
+      OPTION_DRIVER_ENABLE.c_str(),
+      OPTION_CONTROLLER_ENABLE.c_str());
+  }
+
+  static inline void process_boolean_option(int argc, char * argv[],
+                                            const std::string opt_str, bool & opt)
+  {
+    if (rcutils_cli_option_exist(argv, argv + argc, opt_str.c_str()))
+    {
+      std::string option = rcutils_cli_get_option(argv, argv + argc, opt_str.c_str());
+      opt = (option == "True") ? true : false;
+    }
   }
 
   bool init(int argc, char * argv[])
@@ -55,16 +69,9 @@ struct ProcessSettings
       return false;
     }
     // Optional argument parsing
-    if (rcutils_cli_option_exist(argv, argv + argc, OPTION_AUTO_ACTIVATE_NODES.c_str())) {
-      std::string option = rcutils_cli_get_option(
-        argv, argv + argc, OPTION_AUTO_ACTIVATE_NODES.c_str());
-      auto_start_nodes = ( option == "True") ? true : false;
-    }
-    if (rcutils_cli_option_exist(argv, argv + argc, OPTION_LOCK_MEMORY.c_str())) {
-      std::string option = rcutils_cli_get_option(
-        argv, argv + argc, OPTION_LOCK_MEMORY_SIZE.c_str());
-      lock_memory = ( option == "True") ? true : false;
-    }
+    process_boolean_option(argc, argv, OPTION_AUTO_ACTIVATE_NODES, auto_start_nodes);
+    process_boolean_option(argc, argv, OPTION_LOCK_MEMORY, lock_memory);
+
     if (rcutils_cli_option_exist(argv, argv + argc, OPTION_LOCK_MEMORY_SIZE.c_str())) {
       lock_memory_size_mb =
         std::stoi(rcutils_cli_get_option(argv, argv + argc, OPTION_LOCK_MEMORY_SIZE.c_str()));
@@ -84,11 +91,10 @@ struct ProcessSettings
           argv, argv + argc,
           OPTION_CPU_AFFINITY.c_str()));
     }
-    if (rcutils_cli_option_exist(argv, argv + argc, OPTION_CONFIG_CHILD_THREADS.c_str())) {
-      std::string option = rcutils_cli_get_option(
-        argv, argv + argc, OPTION_CONFIG_CHILD_THREADS.c_str());
-      configure_child_threads = ( option == "True") ? true : false;
-    }
+
+    process_boolean_option(argc, argv, OPTION_CONFIG_CHILD_THREADS, configure_child_threads);
+    process_boolean_option(argc, argv, OPTION_DRIVER_ENABLE, driver_enable);
+    process_boolean_option(argc, argv, OPTION_CONTROLLER_ENABLE, controller_enable);
 
     return true;
   }
@@ -127,6 +133,8 @@ struct ProcessSettings
   const std::string OPTION_PRIORITY = "--priority";
   const std::string OPTION_CPU_AFFINITY = "--cpu-affinity";
   const std::string OPTION_CONFIG_CHILD_THREADS = "--config-child-threads";
+  const std::string OPTION_DRIVER_ENABLE = "--driver-enable";
+  const std::string OPTION_CONTROLLER_ENABLE = "--controller-enable";
 
   /// automatically activate lifecycle nodes
   bool auto_start_nodes = false;
@@ -140,6 +148,10 @@ struct ProcessSettings
   size_t lock_memory_size_mb = 0;
   /// configure process child threads (typically DDS threads)
   bool configure_child_threads = false;
+  /// run pendulum driver node
+  bool driver_enable = true;
+  /// run pendulum controller node
+  bool controller_enable = true;
 };
 }  // namespace tools
 }  // namespace pendulum

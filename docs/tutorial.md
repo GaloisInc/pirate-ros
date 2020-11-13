@@ -33,6 +33,14 @@ Arguments (pass arguments as '<name>:=<value>'):
         Configure process child threads (typically DDS threads)
         (default: 'False')
 
+    'driver-enable':
+        Enable/disable pendulum driver)
+        (default: 'True')
+
+    'controller-enable':
+        Enable/disable pendulum controller)
+        (default: 'True')
+
     'rviz':
         Launch RVIZ2 in addition to other nodes
         (default: 'False')
@@ -48,6 +56,8 @@ $ ros2 run pendulum_demo pendulum_demo -h
 	[--priority set process real-time priority]
 	[--cpu-affinity set process cpu affinity]
 	[--config-child-threads configure process settings in child threads]
+	[--driver-enable enable/disable pendulum driver]
+	[--controller-enable enable/disable pendulum controller]
 	[-h]
 ```
 
