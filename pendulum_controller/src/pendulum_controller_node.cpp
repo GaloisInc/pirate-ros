@@ -33,6 +33,7 @@ PendulumControllerNode::PendulumControllerNode(
   state_topic_name_(declare_parameter("state_topic_name").get<std::string>()),
   command_topic_name_(declare_parameter("command_topic_name").get<std::string>()),
   teleop_topic_name_(declare_parameter("teleop_topic_name").get<std::string>()),
+  reset_topic_name_(declare_parameter("reset_topic_name").get<std::string>()),
   command_publish_period_(std::chrono::microseconds{
       declare_parameter("command_publish_period_us").get<std::uint16_t>()}),
   enable_topic_stats_(declare_parameter("enable_topic_stats").get<bool>()),
@@ -46,6 +47,7 @@ PendulumControllerNode::PendulumControllerNode(
 {
   create_teleoperation_subscription();
   create_state_subscription();
+  create_reset_subscription();
   create_command_publisher();
   create_command_timer_callback();
 }
@@ -83,6 +85,16 @@ void PendulumControllerNode::create_state_subscription()
     rclcpp::QoS(10).deadline(deadline_duration_),
     on_sensor_message,
     state_subscription_options);
+}
+
+void PendulumControllerNode::create_reset_subscription()
+{
+  auto on_pendulum_reset = [this](const std_msgs::msg::Empty::SharedPtr) {
+    RCLCPP_INFO(get_logger(), "Pendulum reset");
+    controller_.reset();
+  };
+  reset_sub_ = this->create_subscription<std_msgs::msg::Empty>(
+    reset_topic_name_, rclcpp::QoS(10), on_pendulum_reset);
 }
 
 void PendulumControllerNode::create_command_publisher()

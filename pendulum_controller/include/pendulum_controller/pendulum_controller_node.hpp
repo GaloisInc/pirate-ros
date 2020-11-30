@@ -26,6 +26,7 @@
 #include "rclcpp/publisher.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "rclcpp_lifecycle/lifecycle_publisher.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "lifecycle_msgs/msg/transition_event.hpp"
 #include "lifecycle_msgs/msg/transition.hpp"
 
@@ -58,6 +59,9 @@ private:
 
   /// \brief Create state subscription
   void create_state_subscription();
+
+  /// \brief Create reset subscription
+  void create_reset_subscription();
 
   /// \brief Create command publisher
   void create_command_publisher();
@@ -96,6 +100,7 @@ private:
   const std::string state_topic_name_;
   const std::string command_topic_name_;
   const std::string teleop_topic_name_;
+  const std::string reset_topic_name_;
   std::chrono::microseconds command_publish_period_;
   bool enable_topic_stats_;
   const std::string topic_stats_topic_name_;
@@ -108,6 +113,8 @@ private:
       sensor_msgs::msg::JointState>> state_sub_;
   std::shared_ptr<rclcpp::Subscription<
       pendulum2_msgs::msg::PendulumTeleop>> teleop_sub_;
+  std::shared_ptr<rclcpp::Subscription<
+    std_msgs::msg::Empty>>reset_sub_;
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<
       pendulum2_msgs::msg::JointCommandStamped>> command_pub_;
 

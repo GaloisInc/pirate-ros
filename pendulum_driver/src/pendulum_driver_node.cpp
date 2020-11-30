@@ -28,6 +28,7 @@ PendulumDriverNode::PendulumDriverNode(
   const std::string & node_name,
   const rclcpp::NodeOptions & options)
 : LifecycleNode(node_name, options),
+  reset_topic_name_(declare_parameter("reset_topic_name").get<std::string>()),
   state_topic_name_(declare_parameter("state_topic_name").get<std::string>()),
   command_topic_name_(declare_parameter("command_topic_name").get<std::string>()),
   disturbance_topic_name_(declare_parameter("disturbance_topic_name").get<std::string>()),
@@ -56,6 +57,7 @@ PendulumDriverNode::PendulumDriverNode(
 {
   init_state_message();
   create_state_publisher();
+  create_reset_subscription();
   create_command_subscription();
   create_disturbance_subscription();
   create_state_timer_callback();
@@ -86,6 +88,16 @@ void PendulumDriverNode::create_state_publisher()
     state_topic_name_,
     rclcpp::QoS(10).deadline(deadline_duration_),
     sensor_publisher_options);
+}
+
+void PendulumDriverNode::create_reset_subscription()
+{
+  auto on_pendulum_reset = [this](const std_msgs::msg::Empty::SharedPtr) {
+    RCLCPP_INFO(get_logger(), "Pendulum reset");
+    driver_.reset();
+  };
+  reset_sub_ = this->create_subscription<std_msgs::msg::Empty>(
+    reset_topic_name_, rclcpp::QoS(10), on_pendulum_reset);
 }
 
 void PendulumDriverNode::create_command_subscription()

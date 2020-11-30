@@ -24,6 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "lifecycle_msgs/msg/transition_event.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "rclcpp/strategies/message_pool_memory_strategy.hpp"
 #include "rclcpp/strategies/allocator_memory_strategy.hpp"
 
@@ -54,6 +55,9 @@ public:
 private:
   /// \brief Initialize state message
   void init_state_message();
+
+  /// \brief Create reset subscription
+  void create_reset_subscription();
 
   /// \brief Create command subscription
   void create_command_subscription();
@@ -95,6 +99,7 @@ private:
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_shutdown(const rclcpp_lifecycle::State & state) override;
 
+  const std::string reset_topic_name_;
   const std::string state_topic_name_;
   const std::string command_topic_name_;
   const std::string disturbance_topic_name_;
@@ -107,6 +112,8 @@ private:
   std::chrono::milliseconds deadline_duration_;
   PendulumDriver driver_;
 
+  std::shared_ptr<rclcpp::Subscription<
+      std_msgs::msg::Empty>> reset_sub_;
   std::shared_ptr<rclcpp::Subscription<
       pendulum2_msgs::msg::JointCommandStamped>> command_sub_;
   std::shared_ptr<rclcpp::Subscription<

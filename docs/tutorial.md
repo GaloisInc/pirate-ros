@@ -82,6 +82,7 @@ pendulum_controller:
   ros__parameters:
     state_topic_name: "joint_states"
     command_topic_name: "joint_command"
+    reset_topic_name: "reset"
     teleop_topic_name: "teleop"
     command_publish_period_us: 10000
     enable_topic_stats: False
@@ -95,6 +96,7 @@ pendulum_driver:
   ros__parameters:
     state_topic_name: "joint_states"
     command_topic_name: "joint_command"
+    reset_topic_name: "reset"
     disturbance_topic_name: "disturbance"
     cart_base_joint_name: "cart_base_joint"
     pole_joint_name: "pole_joint"
@@ -137,6 +139,7 @@ $ ros2 topic list
 /parameter_events
 /pendulum_controller/transition_event
 /pendulum_driver/transition_event
+/reset
 /rosout
 /teleop
 ```
@@ -179,6 +182,30 @@ ros2 launch pendulum_bringup pendulum_bringup.launch.py rviz:=True
 This command will open an rviz window showing a model of the pendulum.
 
 ![pendulum_rviz](images/pendulum_rviz.gif)
+
+### Start pendulum controller and driver in separate processes
+
+In the first terminal window start the pendulum controller
+
+''' shell script
+ros2 launch pendulum_bringup pendulum_bringup.launch.py driver-enable:=False controller-enable:=True
+'''
+
+In the second terminal window start the pendulum driver
+''' shell script
+ros2 launch pendulum_bringup pendulum_bringup.launch.py driver-enable:=True controller-enable:=False rviz:=True
+'''
+
+#### Reset the pendulum state
+
+When the controller is not running the pendulum pole falls under the force of gravity and experiences damped oscillation with
+steady state position at zero degrees. When the controller is started again, the system is unstable. In order to get the system
+into a known state, issue the reset command:
+
+''' shell script
+ros2 topic pub -1 /reset std_msgs/Empty
+'''
+
 
 ### Move the pendulum
 

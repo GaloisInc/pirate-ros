@@ -13,6 +13,7 @@
   <depend>pendulum2_msgs</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>rclcpp_components</depend>
+  <depend>std_msgs</depend>
   <depend>lifecycle_msgs</depend>
   <depend>pendulum_tools</depend>
   <depend>rcpputils</depend>
