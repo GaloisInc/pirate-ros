@@ -37,11 +37,13 @@ PendulumDriverNode::PendulumDriverNode(
   state_publish_period_(std::chrono::microseconds{
       declare_parameter("state_publish_period_us").get<std::uint16_t>()}),
   enable_topic_stats_(declare_parameter("enable_topic_stats").get<bool>()),
+  enable_timestamp_validation_(declare_parameter("timestamp_validation").get<bool>()),
   topic_stats_topic_name_{declare_parameter("topic_stats_topic_name").get<std::string>()},
   topic_stats_publish_period_{std::chrono::milliseconds{
         declare_parameter("topic_stats_publish_period_ms").get<std::uint16_t>()}},
   deadline_duration_{std::chrono::milliseconds{
         declare_parameter("deadline_duration_ms").get<std::uint16_t>()}},
+  timestamp_valid_bound(std::chrono::nanoseconds(declare_parameter("timestamp_valid_bound_ns").get<std::uint64_t>())),
   driver_(
     PendulumDriver::Config(
       declare_parameter("driver.pendulum_mass").get<double>(),
@@ -115,7 +117,15 @@ void PendulumDriverNode::create_command_subscription()
     command_subscription_options.topic_stats_options.publish_period = topic_stats_publish_period_;
   }
   auto on_command_received = [this](pendulum2_msgs::msg::JointCommandStamped::SharedPtr msg) {
-      driver_.set_controller_cart_force(msg->cmd.force);
+      bool apply_command = true;
+
+      if (enable_timestamp_validation_) {
+        apply_command = validate_timestamp(msg->header);
+      }
+
+      if (apply_command) {
+        driver_.set_controller_cart_force(msg->cmd.force);
+      }
     };
   command_sub_ = this->create_subscription<pendulum2_msgs::msg::JointCommandStamped>(
     command_topic_name_,
@@ -163,6 +173,18 @@ void PendulumDriverNode::log_driver_state()
   RCLCPP_INFO(get_logger(), "Pole angular velocity = %lf", state.pole_velocity);
   RCLCPP_INFO(get_logger(), "Controller force command = %lf", controller_force_command);
   RCLCPP_INFO(get_logger(), "Disturbance force = %lf", disturbance_force);
+}
+
+bool PendulumDriverNode::validate_timestamp(std_msgs::msg::Header hdr)
+{
+  rclcpp::Duration time_delta = this->get_clock()->now() - hdr.stamp;
+
+  if (std::abs(time_delta.nanoseconds()) > timestamp_valid_bound.nanoseconds()) {
+    RCLCPP_WARN(get_logger(), "Time out of sync: %ld ns", time_delta.nanoseconds());
+    return false;
+  }
+
+  return true;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn

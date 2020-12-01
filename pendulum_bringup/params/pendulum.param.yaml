@@ -6,6 +6,8 @@ pendulum_controller:
     teleop_topic_name: "teleop"
     command_publish_period_us: 10000
     enable_topic_stats: False
+    timestamp_validation: True
+    timestamp_valid_bound_ns: 1000000
     topic_stats_topic_name: "controller_stats"
     topic_stats_publish_period_ms: 1000
     deadline_duration_ms: 0
@@ -22,6 +24,8 @@ pendulum_driver:
     pole_joint_name: "pole_joint"
     state_publish_period_us: 10000
     enable_topic_stats: False
+    timestamp_validation: True
+    timestamp_valid_bound_ns: 1000000
     topic_stats_topic_name: "driver_stats"
     topic_stats_publish_period_ms: 1000
     deadline_duration_ms: 0

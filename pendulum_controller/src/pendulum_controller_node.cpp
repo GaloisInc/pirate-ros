@@ -37,11 +37,13 @@ PendulumControllerNode::PendulumControllerNode(
   command_publish_period_(std::chrono::microseconds{
       declare_parameter("command_publish_period_us").get<std::uint16_t>()}),
   enable_topic_stats_(declare_parameter("enable_topic_stats").get<bool>()),
+  enable_timestamp_validation_(declare_parameter("timestamp_validation").get<bool>()),
   topic_stats_topic_name_{declare_parameter("topic_stats_topic_name").get<std::string>()},
   topic_stats_publish_period_{std::chrono::milliseconds {
         declare_parameter("topic_stats_publish_period_ms").get<std::uint16_t>()}},
   deadline_duration_{std::chrono::milliseconds {
         declare_parameter("deadline_duration_ms").get<std::uint16_t>()}},
+  timestamp_valid_bound(std::chrono::nanoseconds(declare_parameter("timestamp_valid_bound_ns").get<std::uint64_t>())),
   controller_(PendulumController::Config(
       declare_parameter("controller.feedback_matrix").get<std::vector<double>>()))
 {
@@ -76,9 +78,17 @@ void PendulumControllerNode::create_state_subscription()
     state_subscription_options.topic_stats_options.publish_period = topic_stats_publish_period_;
   }
   auto on_sensor_message = [this](const sensor_msgs::msg::JointState::SharedPtr msg) {
-      controller_.set_state(
-        msg->position[0], msg->velocity[0],
-        msg->position[1], msg->velocity[1]);
+      bool update_state = true;
+
+      if (enable_timestamp_validation_) {
+        update_state = validate_timestamp(msg->header);
+      }
+
+      if (update_state) {
+        controller_.set_state(
+          msg->position[0], msg->velocity[0],
+          msg->position[1], msg->velocity[1]);
+      }
     };
   state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
     state_topic_name_,
@@ -138,6 +148,18 @@ void PendulumControllerNode::log_controller_state()
   RCLCPP_INFO(get_logger(), "Teleoperation cart position = %lf", teleoperation_command.at(0));
   RCLCPP_INFO(get_logger(), "Teleoperation cart velocity = %lf", teleoperation_command.at(1));
   RCLCPP_INFO(get_logger(), "Force command = %lf", force_command);
+}
+
+bool PendulumControllerNode::validate_timestamp(std_msgs::msg::Header hdr)
+{
+  rclcpp::Duration time_delta = this->get_clock()->now() - hdr.stamp;
+
+  if (std::abs(time_delta.nanoseconds()) > timestamp_valid_bound.nanoseconds()) {
+    RCLCPP_WARN(get_logger(), "Time out of sync: %ld ns", time_delta.nanoseconds());
+    return false;
+  }
+
+  return true;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn

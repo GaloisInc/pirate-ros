@@ -72,6 +72,9 @@ private:
   /// \brief Log pendulum controller state
   void log_controller_state();
 
+  /// \brief Validate message timestamp
+  bool validate_timestamp(std_msgs::msg::Header hdr);
+
   /// \brief Transition callback for state configuring
   /// \param[in] lifecycle node state
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
@@ -103,9 +106,11 @@ private:
   const std::string reset_topic_name_;
   std::chrono::microseconds command_publish_period_;
   bool enable_topic_stats_;
+  bool enable_timestamp_validation_;
   const std::string topic_stats_topic_name_;
   std::chrono::milliseconds topic_stats_publish_period_;
   std::chrono::milliseconds deadline_duration_;
+  rclcpp::Duration timestamp_valid_bound;
 
   PendulumController controller_;
 
