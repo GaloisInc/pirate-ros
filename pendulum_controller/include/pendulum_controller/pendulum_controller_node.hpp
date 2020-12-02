@@ -69,6 +69,9 @@ private:
   /// \brief Create command timer callback
   void create_command_timer_callback();
 
+  /// \brief Create state time offset publisher
+  void create_state_time_offset_publisher();
+
   /// \brief Log pendulum controller state
   void log_controller_state();
 
@@ -104,6 +107,7 @@ private:
   const std::string command_topic_name_;
   const std::string teleop_topic_name_;
   const std::string reset_topic_name_;
+  const std::string state_time_offset_topic_name_;
   std::chrono::microseconds command_publish_period_;
   bool enable_topic_stats_;
   bool enable_timestamp_validation_;
@@ -122,9 +126,12 @@ private:
     std_msgs::msg::Empty>>reset_sub_;
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<
       pendulum2_msgs::msg::JointCommandStamped>> command_pub_;
+  std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<
+    pendulum2_msgs::msg::TimeOffset>> state_time_offset_pub_;
 
   rclcpp::TimerBase::SharedPtr command_timer_;
   pendulum2_msgs::msg::JointCommandStamped command_message_;
+  pendulum2_msgs::msg::TimeOffset state_time_offset_message_;
 };
 }  // namespace pendulum_controller
 }  // namespace pendulum

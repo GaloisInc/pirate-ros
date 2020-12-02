@@ -25,6 +25,7 @@
 
 #include "pendulum2_msgs/msg/joint_command_stamped.hpp"
 #include "pendulum2_msgs/msg/pendulum_teleop.hpp"
+#include "pendulum2_msgs/msg/time_offset.hpp"
 #include "pendulum_controller/visibility_control.hpp"
 
 namespace pendulum

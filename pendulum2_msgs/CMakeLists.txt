@@ -19,6 +19,7 @@ set(msg_files
     "msg/JointCommand.msg"
     "msg/JointCommandStamped.msg"
     "msg/PendulumTeleop.msg"
+    "msg/TimeOffset.msg"
     )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

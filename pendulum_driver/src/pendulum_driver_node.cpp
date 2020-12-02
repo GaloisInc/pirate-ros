@@ -34,6 +34,7 @@ PendulumDriverNode::PendulumDriverNode(
   disturbance_topic_name_(declare_parameter("disturbance_topic_name").get<std::string>()),
   cart_base_joint_name_(declare_parameter("cart_base_joint_name").get<std::string>()),
   pole_joint_name_(declare_parameter("pole_joint_name").get<std::string>()),
+  command_time_offset_topic_name_(declare_parameter("command_time_offset_topic_name").get<std::string>()),
   state_publish_period_(std::chrono::microseconds{
       declare_parameter("state_publish_period_us").get<std::uint16_t>()}),
   enable_topic_stats_(declare_parameter("enable_topic_stats").get<bool>()),
@@ -63,6 +64,7 @@ PendulumDriverNode::PendulumDriverNode(
   create_command_subscription();
   create_disturbance_subscription();
   create_state_timer_callback();
+  create_command_time_offset_publisher();
 }
 
 void PendulumDriverNode::init_state_message()
@@ -161,6 +163,21 @@ void PendulumDriverNode::create_state_timer_callback()
   state_timer_->cancel();
 }
 
+void PendulumDriverNode::create_command_time_offset_publisher()
+{
+  rclcpp::PublisherOptions command_time_offset_publisher_options;
+  command_time_offset_publisher_options.event_callbacks.deadline_callback =
+    [](rclcpp::QOSDeadlineOfferedInfo &) -> void
+    {
+      // do nothing for instrumenting purposes
+      // in a real-application we may want to trigger an error for a specific deadline misses
+    };
+  command_time_offset_pub_ = this->create_publisher<pendulum2_msgs::msg::TimeOffset>(
+    command_time_offset_topic_name_,
+    rclcpp::QoS(10).deadline(deadline_duration_),
+    command_time_offset_publisher_options);
+}
+
 void PendulumDriverNode::log_driver_state()
 {
   const auto state = driver_.get_state();
@@ -178,6 +195,9 @@ void PendulumDriverNode::log_driver_state()
 bool PendulumDriverNode::validate_timestamp(std_msgs::msg::Header hdr)
 {
   rclcpp::Duration time_delta = this->get_clock()->now() - hdr.stamp;
+
+  command_time_offset_message_.time_delta_ns = time_delta.nanoseconds();
+  command_time_offset_pub_->publish(command_time_offset_message_);
 
   if (std::abs(time_delta.nanoseconds()) > timestamp_valid_bound.nanoseconds()) {
     RCLCPP_WARN(get_logger(), "Time out of sync: %ld ns", time_delta.nanoseconds());
@@ -202,6 +222,7 @@ PendulumDriverNode::on_activate(const rclcpp_lifecycle::State &)
   RCLCPP_INFO(get_logger(), "Activating");
   state_pub_->on_activate();
   state_timer_->reset();
+  command_time_offset_pub_->on_activate();
   return LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -211,6 +232,7 @@ PendulumDriverNode::on_deactivate(const rclcpp_lifecycle::State &)
   RCLCPP_INFO(get_logger(), "Deactivating");
   state_timer_->cancel();
   state_pub_->on_deactivate();
+  command_time_offset_pub_->on_deactivate();
   // log the status to introspect the result
   log_driver_state();
   return LifecycleNodeInterface::CallbackReturn::SUCCESS;

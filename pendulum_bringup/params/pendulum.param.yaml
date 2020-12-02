@@ -3,11 +3,12 @@ pendulum_controller:
     state_topic_name: "joint_states"
     command_topic_name: "joint_command"
     reset_topic_name: "reset"
+    state_time_offset_topic_name: "state_time_offset"
     teleop_topic_name: "teleop"
     command_publish_period_us: 10000
     enable_topic_stats: False
     timestamp_validation: True
-    timestamp_valid_bound_ns: 5000000
+    timestamp_valid_bound_ns: 10000000
     topic_stats_topic_name: "controller_stats"
     topic_stats_publish_period_ms: 1000
     deadline_duration_ms: 0
@@ -19,13 +20,14 @@ pendulum_driver:
     state_topic_name: "joint_states"
     command_topic_name: "joint_command"
     reset_topic_name: "reset"
+    command_time_offset_topic_name: "command_time_offset"
     disturbance_topic_name: "disturbance"
     cart_base_joint_name: "cart_base_joint"
     pole_joint_name: "pole_joint"
     state_publish_period_us: 10000
     enable_topic_stats: False
     timestamp_validation: True
-    timestamp_valid_bound_ns: 5000000
+    timestamp_valid_bound_ns: 10000000
     topic_stats_topic_name: "driver_stats"
     topic_stats_publish_period_ms: 1000
     deadline_duration_ms: 0

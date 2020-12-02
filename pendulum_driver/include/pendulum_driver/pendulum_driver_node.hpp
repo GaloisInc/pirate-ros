@@ -71,6 +71,9 @@ private:
   /// \brief Create timer callback
   void create_state_timer_callback();
 
+  /// \brief Create command time offset publisher
+  void create_command_time_offset_publisher();
+
   /// \brief Log pendulum driver state
   void log_driver_state();
 
@@ -108,6 +111,7 @@ private:
   const std::string disturbance_topic_name_;
   const std::string cart_base_joint_name_;
   const std::string pole_joint_name_;
+  const std::string command_time_offset_topic_name_;
   std::chrono::microseconds state_publish_period_;
   bool enable_topic_stats_;
   bool enable_timestamp_validation_;
@@ -125,10 +129,13 @@ private:
       pendulum2_msgs::msg::JointCommandStamped>> disturbance_sub_;
   std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<
       sensor_msgs::msg::JointState>> state_pub_;
+  std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<
+    pendulum2_msgs::msg::TimeOffset>> command_time_offset_pub_;
 
   rclcpp::TimerBase::SharedPtr state_timer_;
   rclcpp::TimerBase::SharedPtr update_driver_timer_;
   sensor_msgs::msg::JointState state_message_;
+  pendulum2_msgs::msg::TimeOffset command_time_offset_message_;
 };
 }  // namespace pendulum_driver
 }  // namespace pendulum
